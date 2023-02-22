@@ -5,8 +5,9 @@ import (
 	"flag"
 	"log"
 
+	"terraform-provider-emrstreaming/internal/provider"
+
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/hashicorp/terraform-provider-scaffolding-framework/internal/provider"
 )
 
 // Run "go generate" to format example terraform files and generate the docs for the registry/website
@@ -28,6 +29,9 @@ var (
 	// commit  string = ""
 )
 
+// Provider documentation generation.
+//
+//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-name emrstreaming
 func main() {
 	var debug bool
 
@@ -36,7 +40,7 @@ func main() {
 
 	opts := providerserver.ServeOpts{
 		// TODO: Update this string with the published name of your provider.
-		Address: "registry.terraform.io/hashicorp/scaffolding",
+		Address: "registry.terraform.io/b-b3rn4rd/emrstreaming",
 		Debug:   debug,
 	}
 

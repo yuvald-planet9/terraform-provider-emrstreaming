@@ -1,24 +1,4 @@
-# Terraform Provider: EMRStreaming
-
-The emrstreaming provider offers continuous deployment functionality for streaming steps into an EMR cluster. 
-This provider is designed to submit streaming jobs that supposed to continuously run on a permanent EMR cluster.It consists of a single emrstreaming_step resource that acts as a continuous deployment resource to manage jobs lifecycle on an EMR cluster.
-
-# Usage Example
-
-```
-terraform {
-  required_providers {
-    emrstreaming = {
-      source = "hashicorp.com/edu/emrstreaming"
-    }
-  }
-}
-
-# Configure the EMRStreaming Provider
-provider "emrstreaming" {
-  region = "ap-southeast-2"
-}
-
+// add a job (example-app) to the running cluster
 resource "emrstreaming_step" "step_example" {
   cluster_id = "j-xxxxxxxxxx"
   step = {
@@ -29,6 +9,10 @@ resource "emrstreaming_step" "step_example" {
         "--deploy-mode", "cluster",
         "--master", "yarn",
         "--driver-cores", 2,
+        "--executor-memory", "6g",
+        "--driver-memory", "12g",
+        "--executor-cores", "1",
+        "--num-executors", "1",
         "--conf", "spark.dynamicAllocation.enabled=true",
         "--conf", "spark.executorEnv.PYTHONPATH=app-site-packages",
         "s3://example-bucket-name/example-app/main.py"
@@ -42,5 +26,3 @@ resource "emrstreaming_step" "step_example" {
     shutdown_timeout            = 60
   }
 }
-```
-# Links
