@@ -9,7 +9,7 @@ This provider is designed to submit streaming jobs that supposed to continuously
 terraform {
   required_providers {
     emrstreaming = {
-      source = "hashicorp.com/edu/emrstreaming"
+      source = "b-b3rn4rd/emrstreaming"
     }
   }
 }
