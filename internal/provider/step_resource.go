@@ -276,11 +276,9 @@ func (r *StepResource) Create(ctx context.Context, req resource.CreateRequest, r
 				case <-ticker.C:
 					status, err := r.getStepStatus(ctx, stepId, clusterId)
 					if err != nil {
-						resp.Diagnostics.AddError(
-							"Error describing EMR step",
-							"Could not read EMR step ID "+*stepId+": "+err.Error(),
-						)
-						return
+						tflog.Error(ctx, "could not read EMR step ID "+*stepId+": "+err.Error())
+						ticker.Stop()
+						tickerDone <- true
 					}
 					if status == string(emrtypes.StepStateRunning) {
 						tflog.Info(ctx, fmt.Sprintf("step reached the %s status", string(emrtypes.StepStateRunning)))
@@ -290,13 +288,9 @@ func (r *StepResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 					tflog.Info(ctx, fmt.Sprintf("step status is %s, waiting to become %s", status, string(emrtypes.StepStateRunning)))
 					if r.isNonRunningStatus(ctx, status) {
+						tflog.Error(ctx, fmt.Sprintf("step is non running state %s, expecting %s or %s", status, emrtypes.StepStatePending, emrtypes.StepStateRunning))
 						ticker.Stop()
 						tickerDone <- true
-						resp.Diagnostics.AddError(
-							"Error reading EMR step",
-							fmt.Sprintf("Step is non running state %s, expecting %s or %s", status, emrtypes.StepStatePending, emrtypes.StepStateRunning),
-						)
-						return
 					}
 				}
 			}
@@ -305,7 +299,7 @@ func (r *StepResource) Create(ctx context.Context, req resource.CreateRequest, r
 		case <-timeoutDone:
 			tflog.Info(ctx, fmt.Sprintf("the step has achieved the %s status before %d seconds", emrtypes.StepStateRunning, healthCheckMonitorPeriod))
 		case <-time.After(time.Duration(healthCheckMonitorPeriod) * time.Second):
-			tflog.Info(ctx, fmt.Sprintf("step failed to achive the %s status within %d seconds", emrtypes.StepStateRunning, healthCheckMonitorPeriod))
+			tflog.Info(ctx, fmt.Sprintf("step failed to achieve the %s status within %d seconds", emrtypes.StepStateRunning, healthCheckMonitorPeriod))
 			ticker.Stop()
 			tickerDone <- true
 		}
@@ -390,7 +384,6 @@ func (r *StepResource) isNonRunningStatus(ctx context.Context, status string) bo
 
 	for _, nonRunningStatus := range nonRunningStatuses {
 		if nonRunningStatus == emrtypes.StepState(status) {
-			tflog.Info(ctx, "step is in the non-running state skip the cancel")
 			return true
 		}
 	}
@@ -466,11 +459,9 @@ func (r *StepResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 				case <-ticker.C:
 					status, err := r.getStepStatus(ctx, stepId, clusterId)
 					if err != nil {
-						resp.Diagnostics.AddError(
-							"Error describing EMR step",
-							"Could not read EMR step ID "+*stepId+": "+err.Error(),
-						)
-						return
+						tflog.Error(ctx, "could not read EMR step ID "+*stepId+": "+err.Error())
+						ticker.Stop()
+						tickerDone <- true
 					}
 					tflog.Info(ctx, fmt.Sprintf("the step %s status is %s", *stepId, status))
 
@@ -513,12 +504,11 @@ func (r *StepResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 			case <-ticker.C:
 				status, err := r.getStepStatus(ctx, stepId, clusterId)
 				if err != nil {
-					resp.Diagnostics.AddError(
-						"Error describing EMR step",
-						"Could not read EMR step ID "+*stepId+": "+err.Error(),
-					)
-					return
+					ticker.Stop()
+					tickerDone <- true
+					tflog.Error(ctx, "could not read EMR step ID "+*stepId+": "+err.Error())
 				}
+
 				if r.isNonRunningStatus(ctx, status) {
 					ticker.Stop()
 					tickerDone <- true
