@@ -483,7 +483,7 @@ func (r *StepResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		}
 	}
 
-	err = cancelStep(stepId, clusterId, emrtypes.StepCancellationOptionSendInterrupt)
+	err = cancelStep(stepId, clusterId, emrtypes.StepCancellationOptionTerminateProcess)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting EMR step",
